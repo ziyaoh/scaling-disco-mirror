@@ -1,0 +1,20 @@
+001 "<e1>Batteries</e1> stored in a <e2>discharged state</e2> are susceptible to freezing, sulfation and an increased rate of discharge."
+Other
+Comment: discharge state is a state of the entity batteries. None of the nine relations holds.
+
+002 "<e1>Sunflower</e1> <e2>oil</e2> is obtained by extracting oil from sunflower seeds."
+Entity-Origin(e2,e1)
+Comment: like 'olive oil'
+
+003 "The <e1>bag</e1> contained <e2>books</e2>, a cell phone and notepads, but no explosives."
+Content-Container(e2,e1)
+Comment: A prototypical example.
+
+004 "Crude <e1>soybean</e1> <e2>oil</e2> meeting exchange-approved grades and standards-see exchange Rules and Regulations for exact specifications."
+Entity-Origin(e2,e1)
+Comment: like 'olive oil'
+
+005 "Straight ahead you enter a nice sized <e1>living room</e1> that contains the front <e2>door</e2>."
+Component-Whole(e2,e1)
+Comment: The door is a functional part of the living room.
+
