@@ -3,27 +3,59 @@ import sys
 
 
 class DataReader:
+    """
+    A DataReader handles works related with reading and parsing input data.
+    """
 
     def __init__(self, input_file):
+        """
+        Initializer for a DataReader object.
+
+        :param input_file: input file name
+        """
         self.input_file = input_file
 
     def read_format_data(self):
+        """
+        Read data from input file, handles out-of-format data if there's any, and parse the data.
+
+        :return: parsed data
+        """
         raise NotImplementedError
 
     def read_data(self):
+        """
+        Read data from input file.
+
+        :return: data information, abnormal data instances, set of all relations
+        """
         raise NotImplementedError
 
     def format_data(self, data):
+        """
+        Parse data informatino.
+
+        :param data: data information
+
+        :return: parsed data
+        """
         raise  NotImplementedError
 
     def handle_abnormal_data(self, abnormal_data):
-        raise  NotImplementedError
+        """
+        Handle out-of-format data.
+
+        :param abnormal_data: out-of-format data instances
+        """
+        raise NotImplementedError
 
 
 class SemEvalReader(DataReader):
 
     def read_format_data(self):
-        (data, abnormal_data) = self.read_data()
+        (data, abnormal_data, relations) = self.read_data()
+        self.relations = relations
+
         if len(abnormal_data) > 0:
             self.handle_abnormal_data(abnormal_data)
         return self.format_data(data)
@@ -44,6 +76,7 @@ class SemEvalReader(DataReader):
         """
         data = []
         abnormalData = []
+        relations = set()
 
         with open(self.input_file, 'r') as file:
             content = file.readlines()
@@ -66,10 +99,12 @@ class SemEvalReader(DataReader):
                 instance['sentence'] = sentence
 
                 if relationInfo == "Other":
+                    relations.add(relationInfo)
                     instance['relation'] = relationInfo
                     data.append(instance)
                 else:
                     relation = relationInfo[0: relationInfo.index('(')]
+                    relations.add(relation)
                     instance['relation'] = relation
                     data.append(instance)
                     direction = relationInfo[relationInfo.index('(') + 1: relationInfo.index(')')]
@@ -82,7 +117,7 @@ class SemEvalReader(DataReader):
             except ValueError:
                 abnormalData.append(sentence)
 
-        return data, abnormalData
+        return data, abnormalData, relations
 
     def format_data(self, data):
         '''
@@ -100,7 +135,7 @@ class SemEvalReader(DataReader):
         while True:
             action = raw_input("'q' to exit, 'p' to print the abnormal data instances, Enter to continue")
             if action == 'q':
-                sys.exit(0)
+                sys.exit()
             elif action == 'p':
                 for sentence in abnormal_data:
                     print sentence

@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 
 class Classifier:
     """
-    A classifier extracts feature vectors from data, and fits linear classifier to the passed in data.
+    A classifier object extracts feature vectors from data, and fits the specified classifier to the passed in data.
     """
 
     def fit(self, X, y):
@@ -31,7 +31,7 @@ class Classifier:
 
 class LinearClassifier(Classifier):
     def __init__(self, feature, classifier):
-        if feature == 'default':
+        if feature == 'unigram':
             self.feature = CountVectorizer()
         if classifier == 'logit':
             self.classifier = LogisticRegression()
