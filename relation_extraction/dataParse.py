@@ -76,7 +76,7 @@ class SemEvalReader(DataReader):
         """
         data = []
         abnormalData = []
-        relations = set()
+        relations = []
 
         with open(self.input_file, 'r') as file:
             content = file.readlines()
@@ -99,12 +99,14 @@ class SemEvalReader(DataReader):
                 instance['sentence'] = sentence
 
                 if relationInfo == "Other":
-                    relations.add(relationInfo)
+                    if relationInfo not in relations:
+                        relations.append(relationInfo)
                     instance['relation'] = relationInfo
                     data.append(instance)
                 else:
                     relation = relationInfo[0: relationInfo.index('(')]
-                    relations.add(relation)
+                    if relation not in relations:
+                        relations.append(relation)
                     instance['relation'] = relation
                     data.append(instance)
                     direction = relationInfo[relationInfo.index('(') + 1: relationInfo.index(')')]
