@@ -21,7 +21,12 @@ class DataReader:
 
         :return: parsed data
         """
-        raise NotImplementedError
+        (data, abnormal_data, relations) = self.read_data()
+        self.relations = relations
+
+        if len(abnormal_data) > 0:
+            self.handle_abnormal_data(abnormal_data)
+        return self.format_data(data)
 
     def read_data(self):
         """
@@ -33,13 +38,19 @@ class DataReader:
 
     def format_data(self, data):
         """
-        Parse data informatino.
+        Parse data information and store all the instances sentences into X,
+        all the corresponding relation labels into y.
 
         :param data: data information
 
         :return: parsed data
         """
-        raise  NotImplementedError
+        X = []
+        y = []
+        for instance in data:
+            X.append(instance['sentence'])
+            y.append(instance['relation'])
+        return X, y
 
     def handle_abnormal_data(self, abnormal_data):
         """
@@ -52,24 +63,16 @@ class DataReader:
 
 class SemEvalReader(DataReader):
 
-    def read_format_data(self):
-        (data, abnormal_data, relations) = self.read_data()
-        self.relations = relations
-
-        if len(abnormal_data) > 0:
-            self.handle_abnormal_data(abnormal_data)
-        return self.format_data(data)
-
     def read_data(self):
         """
         data = [
             ...,
             {
-                e1: entity 1,
-                e2: entity 2,
-                direction: (e2, e1),
+                e1: (entity 1, start index, end index),
+                e2: (entity 2, start index, end index),
                 sentence: instance sentence,
-                relation: relation
+                relation: relation,
+                source: self.input_file
             },
             ...
         ]
@@ -92,8 +95,10 @@ class SemEvalReader(DataReader):
                 it.next()
 
                 sentence = line[line.index('\"') + 1: -1]
-                instance['e1'] = sentence[sentence.index('<e1>') + 4: sentence.index('</e1>')]
-                instance['e2'] = sentence[sentence.index('<e2>') + 4: sentence.index('</e2>')]
+                instance['e1'] = ( sentence[sentence.index('<e1>') + 4: sentence.index('</e1>')], \
+                                 sentence.index('<e1>') + 4, sentence.index('</e1>') )
+                instance['e2'] = ( sentence[sentence.index('<e2>') + 4: sentence.index('</e2>')], \
+                                 sentence.index('<e2>') + 4, sentence.index('</e2>') )
 
                 sentence = re.sub("<e1>|</e1>|<e2>|</e2>", "", sentence)
                 instance['sentence'] = sentence
@@ -110,8 +115,10 @@ class SemEvalReader(DataReader):
                     instance['relation'] = relation
                     data.append(instance)
                     direction = relationInfo[relationInfo.index('(') + 1: relationInfo.index(')')]
-                    instance['direction'] = (direction[0: 2], direction[3: 5])
+                    if direction == 'e2, e1':
+                        instance['e1'], instance['e2'] = instance['e2'], instance['e1']
 
+                instance['source'] = self.input_file
 
             except StopIteration:
                 break
@@ -120,17 +127,6 @@ class SemEvalReader(DataReader):
                 abnormalData.append(sentence)
 
         return data, abnormalData, relations
-
-    def format_data(self, data):
-        '''
-        Parse the data and store all the instances sentences into X, all the corresponding relation labels into y.
-        '''
-        X = []
-        y = []
-        for instance in data:
-            X.append(instance['sentence'])
-            y.append(instance['relation'])
-        return X, y
 
     def handle_abnormal_data(self, abnormal_data):
         print "number of abnormal data instances in", self.input_file, ":", len(abnormal_data)
@@ -146,3 +142,97 @@ class SemEvalReader(DataReader):
             else:
                 print "unknown command"
 
+
+class NaaclReader(DataReader):
+
+    def read_data(self):
+        data = []
+        abnormalData = []
+        relations = []
+
+        with open(self.input_file, 'r') as file:
+            content = file.readlines()
+
+        for row in content:
+            try:
+                instance = {}
+
+                instance_info = row.split('\t')
+
+
+                instance['e1'] = (instance_info[0], instance_info[1], instance_info[2])
+                instance['e2'] = (instance_info[3], instance_info[4], instance_info[5])
+
+                instance['relation'] = instance_info[7]
+                if instance_info[7] not in relations:
+                    relations.append(instance_info[7])
+
+                instance['sentence'] = instance_info[8]
+
+                instance['source'] = self.input_file
+
+                data.append(instance)
+
+            except StopIteration:
+                break
+
+            except ValueError:
+                abnormalData.append(row)
+
+        return data, abnormalData, relations
+
+    def handle_abnormal_data(self, abnormal_data):
+        pass
+
+
+class StandardReader(DataReader):
+
+    def read_data(self):
+        data = []
+        abnormalData = []
+        relations = []
+
+        with open(self.input_file, 'r') as file:
+            content = file.readlines()
+
+        for row in content:
+            try:
+                instance = {}
+
+                instance_info = row.split('\t')
+
+                instance['e1'] = (instance_info[0], instance_info[1], instance_info[2])
+                instance['e2'] = (instance_info[3], instance_info[4], instance_info[5])
+
+                instance['relation'] = instance_info[6]
+                if instance_info[6] not in relations:
+                    relations.append(instance_info[6])
+
+                instance['sentence'] = instance_info[7]
+
+                instance['source'] = instance_info[8]
+
+                data.append(instance)
+
+            except StopIteration:
+                break
+
+            except ValueError:
+                abnormalData.append(row)
+
+        return data, abnormalData, relations
+
+    def handle_abnormal_data(self, abnormal_data):
+        pass
+
+
+def construct_dataReader(file, format):
+    if format == 'SemEval':
+        return SemEvalReader(file)
+    elif format == 'Naacl':
+        return NaaclReader(file)
+    elif format == 'standard':
+        return StandardReader(file)
+    else:
+        print "Unknown file format", format
+        sys.exit()

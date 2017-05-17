@@ -3,7 +3,7 @@ import sys
 import classifier
 import modelTest
 from contextlib import contextmanager
-from dataParse import SemEvalReader
+from dataParse import construct_dataReader
 
 
 def read_command():
@@ -32,7 +32,7 @@ def read_command():
                         help='The testing report file name. If not specified, report will be printed to standard out.')
     parser.add_argument('-d', '--dataformat',
                         default='SemEval',
-                        choices=['SemEval'],
+                        choices=['SemEval', 'Naacl', 'standard'],
                         help='The input file data format. We will parse input file according to this information. '
                              'If not specified, SemEval format will be used.')
 
@@ -44,11 +44,7 @@ def build_model(input_file, data_format):
     Read training data from input file, fit a classifier model according to the training data.
     Read testing data from test file, and test the classifier model.
     """
-    if data_format == 'SemEval':
-        parser = SemEvalReader(input_file)
-    else:
-        print 'Unknown input format.'
-        sys.exit()
+    parser = construct_dataReader(input_file, data_format)
 
     (X, y) = parser.read_format_data()
 
@@ -62,11 +58,7 @@ def test_model(my_classifier, test_file, output_file, data_format, relations):
     Test the classifier on testing data, and return resulting confusion table, prediction accuracy, precision_recall and
     all relations in testing data.
     """
-    if data_format == 'SemEval':
-        parser = SemEvalReader(test_file)
-    else:
-        print 'Unknown input format.'
-        sys.exit()
+    parser = construct_dataReader(test_file, data_format)
 
     (X_test, y_test) = parser.read_format_data()
 
