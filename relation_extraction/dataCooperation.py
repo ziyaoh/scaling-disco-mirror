@@ -1,9 +1,17 @@
 import argparse
-import sys
 import random
+import sys
 from dataParse import construct_dataReader
 
 def read_command():
+    """
+    main_file: the main data file
+    main_format: format of the main data file
+    --inputs: additional input data files
+    --formats: formats of additional input data files
+    --proportions: number of instances that should be used from each additional input file
+    --output: output file name
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument('main_file',
@@ -45,6 +53,10 @@ def read_command():
 
 
 def cooperate_data(main_file, main_format, files=None, formats=None, proportions=None):
+    """
+    Cooperate data from different files together.
+    :return: list of data instances
+    """
     main_parser = construct_dataReader(main_file, main_format)
     final_data = main_parser.read_data()[0]
 
@@ -58,11 +70,32 @@ def cooperate_data(main_file, main_format, files=None, formats=None, proportions
 
     if proportions:
         for i, reader in enumerate(parsers):
-            # print reader.read_data()[2]
             data = reader.read_data()[0]
-            # print data, proportions[i]
-            sample = random.sample(data, proportions[i])
-            final_data.extend(sample)
+            # in case user requires more instances than a file contains
+            try:
+                sample = random.sample(data, proportions[i])
+                final_data.extend(sample)
+            except ValueError:
+                print "%s does not contain enough data instances" % files[i]
+                print "Total number of data instances: %s" % len(data)
+                while True:
+                    action = raw_input("please reenter the number of instances taken from this file, "
+                                       "or 's' for skip, 'q' for quit")
+                    try:
+                        num = int(action)
+                        if num > len(data):
+                            continue
+                        sample = random.sample(data, num)
+                        final_data.extend(sample)
+                        break
+                    except ValueError:
+                        if action == 's':
+                            break
+                        elif action == 'q':
+                            sys.exit()
+                        else:
+                            print "Unknown command"
+
     else:
         for reader in parsers:
             final_data.extend(reader.read_data()[0])
@@ -73,9 +106,6 @@ def cooperate_data(main_file, main_format, files=None, formats=None, proportions
 def write_final_data(final_data, output_file="final.txt"):
     """
     e1  start_index1    end_index1  e2  start_index2    end_index2  relation    sentence    source
-    :param final_data:
-    :param output_file:
-    :return:
     """
     with open(output_file, 'w') as file:
         for i, instance in enumerate(final_data):
