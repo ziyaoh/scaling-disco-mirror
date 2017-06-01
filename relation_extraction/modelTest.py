@@ -1,3 +1,32 @@
+from sklearn.metrics import f1_score
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
+
+def draw_f1_curve(test_sets):
+    f1s_micro = []
+    f1s_macro = []
+    training_data_labels = []
+    # report = PdfPages('mixture_report.pdf')
+
+    for label in test_sets:
+        training_data_labels.append(label)
+
+        classifier, X_test, y_test = test_sets[label]
+        y_pred = classifier.predict(X_test)
+        f1s_micro.append(get_f1_score(y_pred, y_test, 'micro'))
+        f1s_macro.append(get_f1_score(y_pred, y_test, 'macro'))
+
+    plt.plot(training_data_labels, f1s_micro)
+    plt.plot(training_data_labels, f1s_macro)
+    plt.legend(['micro', 'macro'], loc='upper left')
+    plt.show()
+
+
+def get_f1_score(y_pred, y_test, average):
+    return f1_score(y_test, y_pred, average=average)
+
+
 def model_test(my_classifier, X_test, y_test, relations):
     """
     Test classifier by predicting labels for each instance in X_test,
@@ -11,7 +40,9 @@ def model_test(my_classifier, X_test, y_test, relations):
     confusion_table = get_confusion_table(y_pred, y_test, relations)
     accuracy = get_accuracy(y_pred, y_test)
     precision_recall = get_precision_recall(confusion_table)
-    return confusion_table, accuracy, precision_recall
+    f1_micro = get_f1_score(y_pred, y_test, 'micro')
+    f1_macro = get_f1_score(y_pred, y_test, 'macro')
+    return confusion_table, accuracy, precision_recall, f1_micro, f1_macro
 
 
 def get_confusion_table(y_pred, y_test, relations):
@@ -66,7 +97,7 @@ def get_precision_recall(confusion_table):
             # num_target_pred += get_num_pred(confusion_table, relation, target_relation)
 
             num_target_pred += confusion_table[relation][target_relation]
-            num_target_true += confusion_table[relation][target_relation]
+            num_target_true += confusion_table[target_relation][relation]
 
         if true_positive == 0:
             precision = 0
@@ -74,6 +105,9 @@ def get_precision_recall(confusion_table):
         else:
             precision = (true_positive + 0.0) / num_target_pred
             recall = (true_positive + 0.0) / num_target_true
+
+        # if target_relation == '/people/person/place_lived':
+        #     print '/people/person/place_lived', true_positive, num_target_true, num_target_pred
 
         precision_recall[target_relation] = (precision, recall)
 

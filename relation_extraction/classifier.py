@@ -1,5 +1,6 @@
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.linear_model import LogisticRegression
 
 
@@ -30,15 +31,24 @@ class Classifier:
 
 
 class LinearClassifier(Classifier):
-    def __init__(self, feature, classifier):
+    def __init__(self, feature='unigram', classifier='logit'):
+        print feature, classifier
+
         if feature == 'unigram':
-            self.feature = CountVectorizer()
+            self.vectorizer = CountVectorizer()
+        elif feature == 'binary':
+            self.vectorizer = MultiLabelBinarizer()
+
         if classifier == 'logit':
             self.classifier = LogisticRegression()
-        self.pipe = Pipeline(steps=[('feature', self.feature), ('classifier', self.classifier)])
+
+        self.pipe = Pipeline(steps=[('feature', self.vectorizer), ('classifier', self.classifier)])
 
     def fit(self, X, y):
-        self.pipe.fit(X, y)
+        # self.pipe.fit(X, y)
+        features = self.vectorizer.fit_transform(X)
+        # print 'length vocabulary:', len(self.vectorizer.classes_)
+        self.classifier.fit(features, y)
 
     def predict(self, X):
         return self.pipe.predict(X)

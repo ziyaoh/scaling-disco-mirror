@@ -15,7 +15,7 @@ class DataReader:
         """
         self.input_file = input_file
 
-    def read_format_data(self):
+    def read_format_data(self, trainerType='sentence'):
         """
         Read data from input file, handles out-of-format data if there's any, and parse the data.
 
@@ -26,7 +26,7 @@ class DataReader:
 
         if len(abnormal_data) > 0:
             self.handle_abnormal_data(abnormal_data)
-        return self.format_data(data)
+        return self.format_data(data, trainerType)
 
     def read_data(self):
         """
@@ -36,7 +36,7 @@ class DataReader:
         """
         raise NotImplementedError
 
-    def format_data(self, data):
+    def format_data(self, data, trainerType='sentence'):
         """
         Parse data information and store all the instances sentences into X,
         all the corresponding relation labels into y.
@@ -48,7 +48,11 @@ class DataReader:
         X = []
         y = []
         for instance in data:
-            X.append(instance['sentence'])
+            if trainerType == 'sentence':
+                X.append(instance['sentence'])
+            elif trainerType == 'features':
+                X.append(instance['features'])
+
             y.append(instance['relation'])
         return X, y
 
@@ -72,7 +76,8 @@ class SemEvalReader(DataReader):
                 e2: (entity 2, start index, end index),
                 sentence: instance sentence,
                 relation: relation,
-                source: self.input_file
+                source: self.input_file,
+                feature:
             },
             ...
         ]
@@ -169,6 +174,10 @@ class NaaclReader(DataReader):
 
                 instance['sentence'] = instance_info[8]
 
+                instance['features'] = []
+                for i in range(9, len(instance_info)):
+                    instance['features'].append(instance_info[i])
+
                 instance['source'] = self.input_file
 
                 data.append(instance)
@@ -176,13 +185,24 @@ class NaaclReader(DataReader):
             except StopIteration:
                 break
 
-            except ValueError:
+            except Exception:
                 abnormalData.append(row)
 
         return data, abnormalData, relations
 
     def handle_abnormal_data(self, abnormal_data):
-        pass
+        print "number of abnormal data instances in", self.input_file, ":", len(abnormal_data)
+        while True:
+            action = raw_input("'q' to exit, 'p' to print the abnormal data instances, Enter to continue")
+            if action == 'q':
+                sys.exit()
+            elif action == 'p':
+                for sentence in abnormal_data:
+                    print sentence
+            elif action == '':
+                return
+            else:
+                print "unknown command"
 
 
 class StandardReader(DataReader):
@@ -201,16 +221,21 @@ class StandardReader(DataReader):
 
                 instance_info = row.split('\t')
 
-                instance['e1'] = (instance_info[0], instance_info[1], instance_info[2])
-                instance['e2'] = (instance_info[3], instance_info[4], instance_info[5])
+                instance['source'] = instance_info[0]
 
-                instance['relation'] = instance_info[6]
-                if instance_info[6] not in relations:
-                    relations.append(instance_info[6])
+                instance['e1'] = (instance_info[1], instance_info[2], instance_info[3])
+                instance['e2'] = (instance_info[4], instance_info[5], instance_info[6])
 
-                instance['sentence'] = instance_info[7]
+                instance['relation'] = instance_info[7]
+                if instance_info[7] not in relations:
+                    relations.append(instance_info[7])
 
-                instance['source'] = instance_info[8]
+                instance['sentence'] = instance_info[8]
+
+                instance['features'] = []
+                for i in range(8, len(instance_info)):
+                    instance['features'].append(instance_info[i])
+
 
                 data.append(instance)
 
