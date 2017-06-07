@@ -7,7 +7,7 @@ from relationExtraction import generate_report
 from sklearn.model_selection import train_test_split
 
 
-base_file = 'train_CS_gabor'
+base_file = 'train_DS'
 input_9000 = 'DS_random_9000.txt'
 input_18000 = 'DS_random_18000.txt'
 
@@ -100,8 +100,11 @@ def test_models(classifiers, datasets):
 
 
 if __name__ == '__main__':
-    # create_mixture_data()
-    feature = 'semantic'
-    datasets = get_data('train_CS_gabor', feature, cross_validation=False)
-    classifier, classifier_9000, classifier_18000 = train_models(datasets, feature)
-    test_models([classifier, classifier_9000, classifier_18000], datasets)
+    create_input = False 
+    if create_input:
+        create_mixture_data()
+    else:
+        feature = 'semantic'
+        datasets = get_data('train_CS_gabor', feature, cross_validation=False)
+        classifier, classifier_9000, classifier_18000 = train_models(datasets, feature)
+        test_models([classifier, classifier_9000, classifier_18000], datasets)

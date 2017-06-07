@@ -17,10 +17,16 @@ def draw_f1_curve(test_sets):
         f1s_micro.append(get_f1_score(y_pred, y_test, 'micro'))
         f1s_macro.append(get_f1_score(y_pred, y_test, 'macro'))
 
-    plt.plot(training_data_labels, f1s_micro)
-    plt.plot(training_data_labels, f1s_macro)
-    plt.legend(['micro', 'macro'], loc='upper left')
-    plt.show()
+    with open("f1_score.txt", 'w') as report:
+        report.write("\tmicro\tmacro\n")
+        report.write("base\t%s\t%s\n" % (f1s_micro[0], f1s_macro[0]))
+        report.write("base\t%s\t%s\n" % (f1s_micro[1], f1s_macro[1]))
+        report.write("base\t%s\t%s\n" % (f1s_micro[2], f1s_macro[2]))
+
+    #plt.plot(training_data_labels, f1s_micro)
+    #plt.plot(training_data_labels, f1s_macro)
+    #plt.legend(['micro', 'macro'], loc='upper left')
+    #plt.show()
 
 
 def get_f1_score(y_pred, y_test, average):
