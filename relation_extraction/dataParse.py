@@ -15,7 +15,7 @@ class DataReader:
         """
         self.input_file = input_file
 
-    def read_format_data(self, trainerType='sentence'):
+    def read_format_data(self, feature='unigram'):
         """
         Read data from input file, handles out-of-format data if there's any, and parse the data.
 
@@ -26,7 +26,7 @@ class DataReader:
 
         if len(abnormal_data) > 0:
             self.handle_abnormal_data(abnormal_data)
-        return self.format_data(data, trainerType)
+        return self.format_data(data, feature)
 
     def read_data(self):
         """
@@ -36,7 +36,7 @@ class DataReader:
         """
         raise NotImplementedError
 
-    def format_data(self, data, trainerType='sentence'):
+    def format_data(self, data, feature):
         """
         Parse data information and store all the instances sentences into X,
         all the corresponding relation labels into y.
@@ -48,10 +48,12 @@ class DataReader:
         X = []
         y = []
         for instance in data:
-            if trainerType == 'sentence':
+            if feature == 'unigram':
                 X.append(instance['sentence'])
-            elif trainerType == 'features':
+            elif feature == 'semantic':
                 X.append(instance['features'])
+            else:
+                print "parser unknown feature type %s" % feature
 
             y.append(instance['relation'])
         return X, y
@@ -100,10 +102,22 @@ class SemEvalReader(DataReader):
                 it.next()
 
                 sentence = line[line.index('\"') + 1: -1]
-                instance['e1'] = ( sentence[sentence.index('<e1>') + 4: sentence.index('</e1>')], \
-                                 sentence.index('<e1>') + 4, sentence.index('</e1>') )
-                instance['e2'] = ( sentence[sentence.index('<e2>') + 4: sentence.index('</e2>')], \
-                                 sentence.index('<e2>') + 4, sentence.index('</e2>') )
+
+                e1 = sentence[sentence.index('<e1>') + 4: sentence.index('</e1>')]
+                e2 = sentence[sentence.index('<e2>') + 4: sentence.index('</e2>')]
+                e1_start = sentence.index('<e1>')
+                e2_start = sentence.index('<e2>')
+                if e1_start < e2_start:
+                    instance['e1'] = ( e1, sentence.index('<e1>'), sentence.index('</e1>') - 4 )
+                    instance['e2'] = ( e2, sentence.index('<e2>') - 9, sentence.index('</e2>') - 13 )
+                else:
+                    instance['e1'] = ( e1, sentence.index('<e1>') - 9, sentence.index('</e1>') - 13 )
+                    instance['e2'] = ( e1, sentence.index('<e2>'), sentence.index('</e2>') - 4 )
+
+                # instance['e1'] = ( sentence[sentence.index('<e1>') + 4: sentence.index('</e1>')], \
+                #                  sentence.index('<e1>'), sentence.index('</e1>') - 5 )
+                # instance['e2'] = ( sentence[sentence.index('<e2>') + 4: sentence.index('</e2>')], \
+                #                  sentence.index('<e2>'), sentence.index('</e2>') - 5 )
 
                 sentence = re.sub("<e1>|</e1>|<e2>|</e2>", "", sentence)
                 instance['sentence'] = sentence
@@ -176,7 +190,7 @@ class NaaclReader(DataReader):
 
                 instance['features'] = []
                 for i in range(9, len(instance_info)):
-                    instance['features'].append(instance_info[i])
+                    instance['features'].append(instance_info[i].rstrip())
 
                 instance['source'] = self.input_file
 
@@ -234,7 +248,7 @@ class StandardReader(DataReader):
 
                 instance['features'] = []
                 for i in range(8, len(instance_info)):
-                    instance['features'].append(instance_info[i])
+                    instance['features'].append(instance_info[i].rstrip())
 
 
                 data.append(instance)

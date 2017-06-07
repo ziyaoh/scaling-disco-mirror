@@ -119,7 +119,7 @@ def write_final_data(final_data, output_file="final.txt"):
                     file.write('%s' % feature)
                     if i < len(instance['features']) - 1:
                         file.write('\t')
-
+            file.write('\n')
 
 if __name__ == '__main__':
     opt = read_command()
