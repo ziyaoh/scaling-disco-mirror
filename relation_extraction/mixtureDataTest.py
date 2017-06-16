@@ -15,7 +15,7 @@ CV_proportion = 0.3
 
 
 def create_mixture_data(sizes):
-    running_env = 'windows'
+    running_env = 'unix'
 
     for size in sizes:
         os.system(get_command(size, env=running_env))
@@ -143,11 +143,13 @@ def test_models(classifiers, dataset, base_size):
 
 
 if __name__ == '__main__':
-    create_input = True
+    create_input = False
+    sizes = [100000]
     if create_input:
-        create_mixture_data()
+        create_mixture_data(sizes)
     else:
         feature = 'semantic'
-        dataset = get_data(10000, 'train_CS_gabor', feature, cross_validation=False)
-        classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=10000)
-        test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=10000)
+        base_size = 100000
+        dataset = get_data(base_size, 'train_CS_gabor', feature, cross_validation=False)
+        classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
+        test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)
