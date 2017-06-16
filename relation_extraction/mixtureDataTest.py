@@ -14,20 +14,63 @@ input_18000 = 'DS_random_18000.txt'
 CV_proportion = 0.3
 
 
-def create_mixture_data():
-    os.system("python dataCooperation.py %s Naacl -i train_CS_random -f Naacl -p 9000 -o %s" % (base_file, input_9000))
-    os.system("python dataCooperation.py %s Naacl -i train_CS_random -f Naacl -p 18000 -o %s" % (base_file, input_18000))
+def create_mixture_data(sizes):
+    running_env = 'windows'
+
+    for size in sizes:
+        os.system(get_command(size, env=running_env))
+        os.system(get_command(size, 9000, env=running_env))
+        os.system(get_command(size, 18000, env=running_env))
 
 
-def get_data(test_file, feature, cross_validation=False):
+def get_command(base_size, additional_size=None, env='unix'):
+    if env == 'windows':
+        command = 'c:\Python27\python'
+    elif env == 'unix':
+        command = 'python'
+    else:
+        print "unknown running environment %s" % env
+        sys.exit()
+
+    if not additional_size:
+        output_file = get_output_file(base_size)
+        return "%s dataCooperation.py -i %s -f Naacl -p %s -o %s" % (command, base_file, base_size, output_file)
+    else:
+        output_file = get_output_file(base_size, additional_size)
+        return "%s dataCooperation.py -i %s train_CS_random -f Naacl Naacl -p %s %s -o %s" % \
+               (command, base_file, base_size, additional_size, output_file)
+
+
+def get_output_file(base_size, additional_size=None):
+    if not additional_size:
+        output_file = "base_%s.txt" % base_size
+    else:
+        output_file = "base_%s_random_%s.txt" % (base_size, additional_size)
+    return output_file
+
+
+# def get_all_data(sizes, test_file, feature, cross_validation=False):
+#     if feature != 'unigram' and feature != 'semantic':
+#         print 'unknown feature type'
+#         sys.exit()
+#
+#     datasets = {}
+#     for base_size in sizes:
+#         dataset = get_data(base_size, test_file, feature, cross_validation)
+#         datasets[base_size] = dataset
+#
+#     return datasets
+
+
+def get_data(base_size, test_file, feature, cross_validation=False):
     if feature != 'unigram' and feature != 'semantic':
         print 'unknown feature type'
         sys.exit()
 
     print 'reading data'
-    parser_base = construct_dataReader(base_file, 'Naacl')
-    parser_9000 = construct_dataReader(input_9000, 'standard')
-    parser_18000 = construct_dataReader(input_18000, 'standard')
+    parser_base = construct_dataReader(get_output_file(base_size), 'standard')
+    parser_9000 = construct_dataReader(get_output_file(base_size, 9000), 'standard')
+    parser_18000 = construct_dataReader(get_output_file(base_size, 18000), 'standard')
 
     X_base, y_base = parser_base.read_format_data(feature)
     X_9000, y_9000 = parser_9000.read_format_data(feature)
@@ -38,28 +81,28 @@ def get_data(test_file, feature, cross_validation=False):
         X_9000_train, X_9000_test, y_9000_train, y_9000_test = train_test_split(X_9000, y_9000, test_size=CV_proportion)
         X_18000_train, X_18000_test, y_18000_train, y_18000_test = train_test_split(X_18000, y_18000, test_size=CV_proportion)
 
-        datasets = {
-            base_file: (X_base_train, X_base_test, y_base_train, y_base_test, parser_base.relations),
-            input_9000: (X_9000_train, X_9000_test, y_9000_train, y_9000_test, parser_9000.relations),
-            input_18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, parser_18000.relations)
+        dataset = {
+            0: (X_base_train, X_base_test, y_base_train, y_base_test, parser_base.relations),
+            9000: (X_9000_train, X_9000_test, y_9000_train, y_9000_test, parser_9000.relations),
+            18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, parser_18000.relations)
         }
     else:
         parser_test = construct_dataReader(test_file, 'Naacl')
         X_test, y_test = parser_test.read_format_data(feature)
 
-        datasets = {
-            base_file: (X_base, X_test, y_base, y_test, parser_base.relations),
-            input_9000: (X_9000, X_test, y_9000, y_test, parser_9000.relations),
-            input_18000: (X_18000, X_test, y_18000, y_test, parser_18000.relations)
+        dataset = {
+            0: (X_base, X_test, y_base, y_test, parser_base.relations),
+            9000: (X_9000, X_test, y_9000, y_test, parser_9000.relations),
+            18000: (X_18000, X_test, y_18000, y_test, parser_18000.relations)
         }
 
-    return datasets
+    return dataset
 
 
-def train_models(datasets, feature):
-    classifier = build_model(base_file, datasets[base_file][0], datasets[base_file][2], feature)
-    classifier_9000 = build_model(input_9000, datasets[input_9000][0], datasets[input_9000][2], feature)
-    classifier_18000 = build_model(input_18000, datasets[input_18000][0], datasets[input_18000][2], feature)
+def train_models(dataset, feature, base_size):
+    classifier = build_model(get_output_file(base_size), dataset[0][0], dataset[0][2], feature)
+    classifier_9000 = build_model(get_output_file(base_size, 9000), dataset[9000][0], dataset[9000][2], feature)
+    classifier_18000 = build_model(get_output_file(base_size, 18000), dataset[18000][0], dataset[18000][2], feature)
 
     return (classifier, classifier_9000, classifier_18000)
 
@@ -76,7 +119,7 @@ def build_model(input_file, X, y, feature):
     return my_classifier
 
 
-def test_models(classifiers, datasets):
+def test_models(classifiers, dataset, base_size):
     """
     test_sets = {
         0: (classifier_base, X_base_test, y_base_test),
@@ -86,13 +129,13 @@ def test_models(classifiers, datasets):
 
     print "testing classifiers"
 
-    test_sets = {
-        0: (classifiers[0], datasets[base_file][1], datasets[base_file][3]),
-        9000: (classifiers[1], datasets[input_9000][1], datasets[input_9000][3]),
-        18000: (classifiers[2], datasets[input_18000][1], datasets[input_18000][3])
+    test_set = {
+        0: (classifiers[0], dataset[0][1], dataset[0][3]),
+        9000: (classifiers[1], dataset[9000][1], dataset[9000][3]),
+        18000: (classifiers[2], dataset[18000][1], dataset[18000][3])
     }
 
-    draw_f1_curve(test_sets)
+    draw_f1_curve(test_set, base_size)
 
     # (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_sets['9000'][1],
     #                                                                                          test_sets['9000'][2], datasets[input_9000][4])
@@ -100,11 +143,11 @@ def test_models(classifiers, datasets):
 
 
 if __name__ == '__main__':
-    create_input = False 
+    create_input = True
     if create_input:
         create_mixture_data()
     else:
         feature = 'semantic'
-        datasets = get_data('train_CS_gabor', feature, cross_validation=False)
-        classifier, classifier_9000, classifier_18000 = train_models(datasets, feature)
-        test_models([classifier, classifier_9000, classifier_18000], datasets)
+        dataset = get_data(10000, 'train_CS_gabor', feature, cross_validation=False)
+        classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=10000)
+        test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=10000)

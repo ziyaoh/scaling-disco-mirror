@@ -1,27 +1,23 @@
 from sklearn.metrics import f1_score
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+# import matplotlib.pyplot as plt
+# from matplotlib.backends.backend_pdf import PdfPages
 
 
-def draw_f1_curve(test_sets):
-    f1s_micro = []
-    f1s_macro = []
+def draw_f1_curve(test_sets, base_size):
+    f1s = {}
     training_data_labels = []
     # report = PdfPages('mixture_report.pdf')
 
     for label in test_sets:
-        training_data_labels.append(label)
-
         classifier, X_test, y_test = test_sets[label]
         y_pred = classifier.predict(X_test)
-        f1s_micro.append(get_f1_score(y_pred, y_test, 'micro'))
-        f1s_macro.append(get_f1_score(y_pred, y_test, 'macro'))
+        f1s[label] = {'micro': get_f1_score(y_pred, y_test, 'micro'), 'macro': get_f1_score(y_pred, y_test, 'macro')}
 
-    with open("f1_score.txt", 'w') as report:
+    with open("f1_score.txt", 'a+') as report:
         report.write("\tmicro\tmacro\n")
-        report.write("base\t%s\t%s\n" % (f1s_micro[0], f1s_macro[0]))
-        report.write("base\t%s\t%s\n" % (f1s_micro[1], f1s_macro[1]))
-        report.write("base\t%s\t%s\n" % (f1s_micro[2], f1s_macro[2]))
+        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 0, f1s[0]['micro'], f1s[0]['macro']))
+        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 9000, f1s[9000]['micro'], f1s[9000]['macro']))
+        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 18000, f1s[18000]['micro'], f1s[18000]['macro']))
 
     #plt.plot(training_data_labels, f1s_micro)
     #plt.plot(training_data_labels, f1s_macro)
