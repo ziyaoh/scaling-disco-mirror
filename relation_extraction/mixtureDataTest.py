@@ -1,7 +1,8 @@
 import os
 import sys
-import classifier
+import argparse
 from dataParse import construct_dataReader
+from classifier import LinearClassifier
 from modelTest import draw_f1_curve, model_test
 from relationExtraction import generate_report
 from sklearn.model_selection import train_test_split
@@ -14,8 +15,16 @@ input_18000 = 'DS_random_18000.txt'
 CV_proportion = 0.3
 
 
+def read_command():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', action='store_true', help='Create input file.')
+
+    return parser.parse_args()
+
+
 def create_mixture_data(sizes):
     running_env = 'unix'
+    print 'generating input files'
 
     for size in sizes:
         os.system(get_command(size, env=running_env))
@@ -114,7 +123,7 @@ def build_model(input_file, X, y, feature):
     """
     print "training on %s" % input_file
 
-    my_classifier = classifier.LinearClassifier(feature=feature)
+    my_classifier = LinearClassifier(feature=feature)
     my_classifier.fit(X, y)
     return my_classifier
 
@@ -143,13 +152,14 @@ def test_models(classifiers, dataset, base_size):
 
 
 if __name__ == '__main__':
-    create_input = False
-    sizes = [10000]
-    if create_input:
+    opt = read_command()
+
+    sizes = [1000, 5000]
+    if opt.input:
         create_mixture_data(sizes)
     else:
         feature = 'semantic'
-        base_size = 10000
-        dataset = get_data(base_size, 'train_CS_gabor', feature, cross_validation=False)
-        classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
-        test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)
+        for base_size in sizes:
+            dataset = get_data(base_size, 'train_CS_gabor', feature, cross_validation=False)
+            classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
+            test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)
