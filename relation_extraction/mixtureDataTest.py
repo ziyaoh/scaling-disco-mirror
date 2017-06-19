@@ -144,12 +144,12 @@ def test_models(classifiers, dataset, base_size):
 
 if __name__ == '__main__':
     create_input = False
-    sizes = [100000]
+    sizes = [10000]
     if create_input:
         create_mixture_data(sizes)
     else:
         feature = 'semantic'
-        base_size = 100000
+        base_size = 10000
         dataset = get_data(base_size, 'train_CS_gabor', feature, cross_validation=False)
         classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
         test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)

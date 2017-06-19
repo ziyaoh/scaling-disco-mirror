@@ -37,7 +37,7 @@ class LinearClassifier(Classifier):
         if feature == 'unigram':
             self.vectorizer = CountVectorizer()
         elif feature == 'semantic':
-            self.vectorizer = MultiLabelBinarizer()
+            self.vectorizer = CountVectorizer(analyzer=lambda x: x)
 
         if classifier == 'logit':
             self.classifier = LogisticRegression()
@@ -48,7 +48,7 @@ class LinearClassifier(Classifier):
         # self.pipe.fit(X, y)
         self.vectorizer.fit(X)
         features = self.vectorizer.transform(X)
-        print 'length vocabulary:', len(features[0])
+        print 'length vocabulary:', len(self.vectorizer.vocabulary_)
         self.classifier.fit(features, y)
 
     def predict(self, X):
