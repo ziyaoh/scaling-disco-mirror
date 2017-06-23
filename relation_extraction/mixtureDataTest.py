@@ -58,19 +58,6 @@ def get_output_file(base_size, additional_size=None):
     return output_file
 
 
-# def get_all_data(sizes, test_file, feature, cross_validation=False):
-#     if feature != 'unigram' and feature != 'semantic':
-#         print 'unknown feature type'
-#         sys.exit()
-#
-#     datasets = {}
-#     for base_size in sizes:
-#         dataset = get_data(base_size, test_file, feature, cross_validation)
-#         datasets[base_size] = dataset
-#
-#     return datasets
-
-
 def get_data(base_size, test_file, feature, cross_validation=False):
     if feature != 'unigram' and feature != 'semantic':
         print 'unknown feature type'
@@ -96,7 +83,7 @@ def get_data(base_size, test_file, feature, cross_validation=False):
             18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, parser_18000.relations)
         }
     else:
-        parser_test = construct_dataReader(test_file, 'Naacl')
+        parser_test = construct_dataReader(test_file, 'Angli')
         X_test, y_test = parser_test.read_format_data(feature)
 
         dataset = {
@@ -160,6 +147,6 @@ if __name__ == '__main__':
     else:
         feature = 'semantic'
         for base_size in sizes:
-            dataset = get_data(base_size, 'train_CS_gabor', feature, cross_validation=False)
+            dataset = get_data(base_size, 'test', feature, cross_validation=False)
             classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
             test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)

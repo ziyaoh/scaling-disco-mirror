@@ -1,5 +1,6 @@
 import re
 import sys
+import ast
 
 
 class DataReader:
@@ -265,6 +266,95 @@ class StandardReader(DataReader):
         pass
 
 
+class AngliReader(DataReader):
+    def read_data(self):
+        data = []
+        abnormalData = []
+        relations = []
+
+        with open(self.input_file, 'r') as file:
+            content = file.readlines()
+
+        for row in content:
+            try:
+                instance = {}
+
+                instance_info = row.rstrip().split('\t')
+
+                instance = self._read_line_angli(instance_info)
+
+                instance['source'] = self.input_file
+
+                if instance['relation'] not in relations:
+                    relations.append(instance['relation'])
+
+                data.append(instance)
+
+            except StopIteration:
+                break
+
+            except ValueError:
+                abnormalData.append(row)
+
+        return data, abnormalData, relations
+
+    def _read_line_angli(self, vals, annotator='soderland'):
+        """Read line from data/gold1/test_multiPositive.tsv format."""
+        def to_val(label):
+            """Return numerical value based on Angli-style label"""
+            if label == 'optional':
+                return 0
+            elif label.endswith('neg'):
+                return -1
+            else:
+                return 1
+        angli_relation_types = ['has nationality', 'born in',
+                                'lived in', 'died in', 'traveled to']
+        normal_types = ['per:origin', '/people/person/place_of_birth', '/people/person/place_lived', '/people/deceased_person/place_of_death', 'travel']
+        
+        relations = dict((k, to_val(v)) for k, v in zip(normal_types, ast.literal_eval(vals[7])))
+
+        instance = {}
+        relation = 'NA'
+        for rel in relations:
+            if relations[rel] == 1:
+                relation = rel
+        instance['relation'] = relation
+
+        d = {'arg0': vals[0],
+             'i00': int(vals[1]),
+             'i01': int(vals[2]),
+             'arg1': vals[3],
+             'i10': int(vals[4]),
+             'i11': int(vals[5]),
+             'id': vals[6],
+             'relations': relations,
+             'i0': int(vals[9]),
+             'i1': int(vals[10]),
+             'txt': vals[11]}
+        # Populate indices for travel docs, since they contain
+        # no indices in the file from Angli.
+        if d['id'].startswith('travel'):
+            d['i0'] = 0  # This is true anyways, but let's guarantee it.
+            d['i00'] = d['txt'].find(d['arg0'])
+            d['i10'] = d['txt'].find(d['arg1'])
+        # Guarantee that entity indice ranges match the length of the entity.
+        d['i01'] = d['i00'] + len(d['arg0'])
+        d['i11'] = d['i10'] + len(d['arg1'])
+        # Guarantee that excerpt indice ranges match length.
+        d['i1'] = d['i0'] + len(d['txt'])
+
+        instance['e1'] = (d['arg0'], d['i00'], d['i01'])
+        instance['e2'] = (d['arg1'], d['i10'], d['i11'])
+
+        instance['sentence'] = vals[11]
+
+        instance['features'] = []
+        for i in range(12, len(vals)):
+            instance['features'].append(vals[i].rstrip())
+
+        return instance
+
 def construct_dataReader(file, format):
     if format == 'SemEval':
         return SemEvalReader(file)
@@ -272,6 +362,8 @@ def construct_dataReader(file, format):
         return NaaclReader(file)
     elif format == 'standard':
         return StandardReader(file)
+    elif format == 'Angli':
+        return AngliReader(file)
     else:
         print "Unknown file format", format
         sys.exit()
