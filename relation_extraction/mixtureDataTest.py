@@ -146,15 +146,15 @@ def test_models(classifiers, dataset, base_size):
 
     draw_f1_curve(test_set, base_size)
 
-    # (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_sets['9000'][1],
-    #                                                                                          test_sets['9000'][2], datasets[input_9000][4])
-    # generate_report('unigram', 'logit', '9000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro)
+    (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_set[9000][1],
+                                                                                             test_set[9000][2], dataset[9000][4])
+    generate_report('unigram', 'logit', '9000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[9000][4])
 
 
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = [1000, 5000]
+    sizes = ['all']
     if opt.input:
         create_mixture_data(sizes)
     else:

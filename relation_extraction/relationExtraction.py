@@ -66,7 +66,7 @@ def test_model(my_classifier, test_file, output_file, data_format, relations):
     return (confusion_table, accuracy, precision_recall, f1_micro, f1_macro)
 
 
-def generate_report(feature_type, classifier_type, output_file, confusion_table, accuracy, precision_recall, f1_micro, f1_macro):
+def generate_report(feature_type, classifier_type, output_file, confusion_table, accuracy, precision_recall, f1_micro, f1_macro, relations):
     """
     Generate a report based on testing data.
     """
