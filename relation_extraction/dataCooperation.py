@@ -25,8 +25,7 @@ def read_command():
     parser.add_argument('-f', '--formats',
                         nargs='+',
                         required=True,
-                        help='Format of each input file data. Must be in one to one correspondence with input files',
-                        choices=['SemEval', 'Naacl', 'standard'])
+                        help='Format of each input file data. Must be in one to one correspondence with input files')
     parser.add_argument('-p', '--proportions',
                         nargs='+',
                         default=None,

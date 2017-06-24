@@ -46,7 +46,7 @@ def build_model(input_file, data_format, feature_type, classifier_type):
     """
     parser = construct_dataReader(input_file, data_format)
 
-    (X, y) = parser.read_format_data()
+    (X, y) = parser.read_format_data(feature_type)
 
     my_classifier = classifier.LinearClassifier(feature_type, classifier_type)
     my_classifier.fit(X, y)
@@ -66,10 +66,11 @@ def test_model(my_classifier, test_file, output_file, data_format, relations):
     return (confusion_table, accuracy, precision_recall, f1_micro, f1_macro)
 
 
-def generate_report(feature_type, classifier_type, output_file, confusion_table, accuracy, precision_recall, f1_micro, f1_macro, relations):
+def generate_report(feature_type, classifier_type, output_file, confusion_table, accuracy, precision_recall, f1_micro, f1_macro, original_relations):
     """
     Generate a report based on testing data.
     """
+    relations = [rel.split('/')[-1] for rel in original_relations]
     with report_writer(output_file) as writer:
         writer.write("Report for %s feature %s classifier:\n" % (feature_type, classifier_type))
 
@@ -81,7 +82,7 @@ def generate_report(feature_type, classifier_type, output_file, confusion_table,
         writer.write("\nPrediction Accuracy: %s\n" % accuracy)
 
         writer.write("\nConfusion Table:\n")
-        width = 40
+        width = 20
         header = "".rjust(width)
         for column in relations:
             header += column.rjust(width)
@@ -102,8 +103,8 @@ def generate_report(feature_type, classifier_type, output_file, confusion_table,
         writer.write("\nPrecision and Recall:\n")
         writer.write("".rjust(width) + "precision".rjust(10) + "recall".rjust(10))
 
-        for relation in relations:
-            p_r = precision_recall[relation]
+        for i, relation in enumerate(relations):
+            p_r = precision_recall[original_relations[i]]
             writer.write("\n" + relation.rjust(width) + "%.4f".rjust(10) % p_r[0] + "%.4f".rjust(10) % p_r[1])
         writer.write("\n")
 
@@ -125,6 +126,8 @@ def report_writer(file_name):
 if __name__ == '__main__':
     opt = read_command()
     (my_classifier, relations) = build_model(opt.input, opt.dataformat, opt.feature, opt.classifier)
+    # this is a trivial fix but anyways for now...
+    relations.append('travel')
     (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) \
         = test_model(my_classifier, opt.test, opt.output, opt.dataformat, relations)
-    generate_report(opt.feature, opt.classifier, opt.output, confusion_table, accuracy, precision_recall, f1_micro, f1_macro)
+    generate_report(opt.feature, opt.classifier, opt.output, confusion_table, accuracy, precision_recall, f1_micro, f1_macro, relations)

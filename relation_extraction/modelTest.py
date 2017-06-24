@@ -54,6 +54,9 @@ def get_confusion_table(y_pred, y_test, relations):
     :param y_test:
     :return: {actual_class1: {pred_class1: number, pred_class2: number, ...}, actual_class2, ...}
     """
+    # this is trivial as well but just for now...
+    if not 'travel' in relations:
+        relations.append('travel')
     confusion_table = {}
     for actual_relation in relations:
         confusion_table[actual_relation] = {}
@@ -62,6 +65,10 @@ def get_confusion_table(y_pred, y_test, relations):
 
     for i, relation in enumerate(y_test):
         relation_pred = y_pred[i]
+        # if not relation in confusion_table:
+        #     confusion_table[relation] = {}
+        # if not relation_pred in confusion_table[relation]:
+        #     confusion_table[relation][relation_pred] = 0
         confusion_table[relation][relation_pred] += 1
     return confusion_table
 
