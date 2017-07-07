@@ -37,8 +37,8 @@ def draw_f1_curve(test_sets, base_size):
 def report_helper(report, base_size, random_size, macros):
     report.write("base_%s_random_%s\n" % (base_size, random_size))
     for label in macros:
-        report.write("%s\t%s\n" % (label, macro[label])
-    # report.write("")
+        report.write("%s\t%s\n" % (label, macro[label]))
+    report.write("\n")
 
 
 def get_f1_score(y_pred, y_test, average):
