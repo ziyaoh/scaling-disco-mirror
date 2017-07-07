@@ -1,0 +1,20 @@
+base_all_random_0
+per:origin	0.739229196638
+/people/person/place_lived	0.465798045603
+/people/deceased_person/place_of_death	0.49226006192
+/people/person/place_of_birth	0.485893416928
+
+base_all_random_9000
+per:origin	0.721862473019
+travel	0.477707006369
+/people/person/place_lived	0.465798045603
+/people/deceased_person/place_of_death	0.49226006192
+/people/person/place_of_birth	0.485893416928
+
+base_all_random_18000
+per:origin	0.721862473019
+travel	0.477707006369
+/people/person/place_lived	0.465798045603
+/people/deceased_person/place_of_death	0.49226006192
+/people/person/place_of_birth	0.485893416928
+

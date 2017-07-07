@@ -152,7 +152,7 @@ def test_models(classifiers, dataset, base_size):
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = [10000]
+    sizes = ['all']
     if opt.input:
         create_mixture_data(sizes)
     else:
