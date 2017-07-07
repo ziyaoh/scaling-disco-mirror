@@ -110,7 +110,8 @@ def build_model(input_file, X, y, feature):
     """
     print "training on %s" % input_file
 
-    my_classifier = LinearClassifier(feature=feature)
+    # my_classifier = LinearClassifier(feature=feature)
+    my_classifier = OneVsRestClassifier(feature=feature)
     my_classifier.fit(X, y)
     return my_classifier
 
@@ -133,19 +134,19 @@ def test_models(classifiers, dataset, base_size):
 
     draw_f1_curve(test_set, base_size)
 
-
-    (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[0], test_set[0][1],
+    if False:
+        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[0], test_set[0][1],
                                                                                              test_set[0][2], dataset[0][4])
-    generate_report('semantic', 'logit', '0_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[0][4])
+        generate_report('semantic', 'logit', '0_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[0][4])
 
-    (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_set[9000][1],
+        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_set[9000][1],
                                                                                              test_set[9000][2], dataset[9000][4])
-    generate_report('semantic', 'logit', '9000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[9000][4])
+        generate_report('semantic', 'logit', '9000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[9000][4])
 
 
-    (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[2], test_set[18000][1],
+        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[2], test_set[18000][1],
                                                                                              test_set[18000][2], dataset[18000][4])
-    generate_report('semantic', 'logit', '18000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[18000][4])
+        generate_report('semantic', 'logit', '18000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[18000][4])
 
 
 if __name__ == '__main__':

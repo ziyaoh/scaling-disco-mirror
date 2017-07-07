@@ -126,13 +126,13 @@ class SemEvalReader(DataReader):
                 if relationInfo == "Other":
                     if relationInfo not in relations:
                         relations.append(relationInfo)
-                    instance['relation'] = relationInfo
+                    instance['relation'] = [relationInfo]
                     data.append(instance)
                 else:
                     relation = relationInfo[0: relationInfo.index('(')]
                     if relation not in relations:
                         relations.append(relation)
-                    instance['relation'] = relation
+                    instance['relation'] = [relation]
                     data.append(instance)
                     direction = relationInfo[relationInfo.index('(') + 1: relationInfo.index(')')]
                     if direction == 'e2, e1':
@@ -183,7 +183,10 @@ class NaaclReader(DataReader):
                 instance['e1'] = (instance_info[0], instance_info[1], instance_info[2])
                 instance['e2'] = (instance_info[3], instance_info[4], instance_info[5])
 
-                instance['relation'] = instance_info[7]
+                instance['relation'] = [instance_info[7]]
+                if instance_info[7] == 'NA':
+                    instance['relation'] = []
+
                 if instance_info[7] not in relations:
                     relations.append(instance_info[7])
 
@@ -241,16 +244,20 @@ class StandardReader(DataReader):
                 instance['e1'] = (instance_info[1], instance_info[2], instance_info[3])
                 instance['e2'] = (instance_info[4], instance_info[5], instance_info[6])
 
-                instance['relation'] = instance_info[7]
-                if instance_info[7] not in relations:
-                    relations.append(instance_info[7])
+                instance['relation'] = ast.literal_eval(instance_info[7])
+                for rel in instance['relation']:
+                    if rel not in relations:
+                        relations.append(rel)
+
+                # instace['relation'] = instance_info[7]
+                # if instance_info[7] not in relations:
+                #     relations.append(instance_info[7])
 
                 instance['sentence'] = instance_info[8]
 
                 instance['features'] = []
                 for i in range(8, len(instance_info)):
                     instance['features'].append(instance_info[i].rstrip())
-
 
                 data.append(instance)
 
@@ -285,8 +292,9 @@ class AngliReader(DataReader):
 
                 instance['source'] = self.input_file
 
-                if instance['relation'] not in relations:
-                    relations.append(instance['relation'])
+                for rel in instance['relation']:
+                    if rel not in relations:
+                        relations.append(rel)
 
                 data.append(instance)
 
@@ -315,10 +323,10 @@ class AngliReader(DataReader):
         relations = dict((k, to_val(v)) for k, v in zip(normal_types, ast.literal_eval(vals[7])))
 
         instance = {}
-        relation = 'NA'
+        relation = [] 
         for rel in relations:
             if relations[rel] == 1:
-                relation = rel
+                relation.append(rel)
         instance['relation'] = relation
 
         d = {'arg0': vals[0],

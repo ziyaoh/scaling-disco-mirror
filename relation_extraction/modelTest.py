@@ -8,21 +8,37 @@ def draw_f1_curve(test_sets, base_size):
     training_data_labels = []
     # report = PdfPages('mixture_report.pdf')
 
-    for label in test_sets:
+    for rand_size in test_sets:
         classifier, X_test, y_test = test_sets[label]
-        y_pred = classifier.predict(X_test)
-        f1s[label] = {'micro': get_f1_score(y_pred, y_test, 'micro'), 'macro': get_f1_score(y_pred, y_test, 'macro')}
+        y_pred_binary = classifier.predict(X_test, binarized=True)
+        y_test_binary = classifier.binarize_label(y_test)
+
+        f1s[rand_size] = {}
+        for label in y_pred_binary:
+            f1s[rand_size][label] = get_f1_score(y_pred_binary[label], y_test_binary[label], 'macro')
+
+        # f1s[label] = {'micro': get_f1_score(y_pred, y_test, 'micro'), 'macro': get_f1_score(y_pred, y_test, 'macro')}
 
     with open("f1_score.txt", 'a+') as report:
-        report.write("\tmicro\tmacro\n")
-        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 0, f1s[0]['micro'], f1s[0]['macro']))
-        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 9000, f1s[9000]['micro'], f1s[9000]['macro']))
-        report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 18000, f1s[18000]['micro'], f1s[18000]['macro']))
+        # report.write("\tmicro\tmacro\n")
+        # report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 0, f1s[0]['micro'], f1s[0]['macro']))
+        # report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 9000, f1s[9000]['micro'], f1s[9000]['macro']))
+        # report.write("base_%s_random_%s\t%s\t%s\n" % (base_size, 18000, f1s[18000]['micro'], f1s[18000]['macro']))
+        report_helper(report, base_size, 0, f1s[0])
+        report_helper(report, base_size, 9000, f1s[9000])
+        report_helper(report, base_size, 18000, f1s[18000])
 
     #plt.plot(training_data_labels, f1s_micro)
     #plt.plot(training_data_labels, f1s_macro)
     #plt.legend(['micro', 'macro'], loc='upper left')
     #plt.show()
+
+
+def report_helper(report, base_size, random_size, macros):
+    report.write("base_%s_random_%s\n" % (base_size, random_size))
+    for label in macros:
+        report.write("%s\t%s\n" % (label, macro[label])
+    # report.write("")
 
 
 def get_f1_score(y_pred, y_test, average):
