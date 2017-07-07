@@ -2,7 +2,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer, LabelBinarizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multiclass import OneVsRestClassifier as OVRClassifier
 
 
 class Classifier:
@@ -69,7 +69,7 @@ class OneVsRestClassifier(Classifier):
             self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
 
         if classifier == 'logit':
-            self.classifier = OneVsRestClassifier(LogisticRegression())
+            self.classifier = OVRClassifier(LogisticRegression())
 
     def fit(self, X, y):
         X_vec = self.vectorizer_x.fit_transform(X)
@@ -81,8 +81,7 @@ class OneVsRestClassifier(Classifier):
         X_test_vec = self.vectorizer_x.transform(X)
         y_pred_vec = self.classifier.predict(X_test_vec)
 
-        if binary:
-            pred = {}
+        if binarized:
             y_vec = y_pred_vec.toarray()
             return self.classify_by_label(y_vec)
         else:
@@ -94,9 +93,9 @@ class OneVsRestClassifier(Classifier):
 
     def classify_by_label(self, instances):
         pred = {}
-        for label in self.vectorizer.vocabulary_:
+        for label in self.vectorizer_y.vocabulary_:
             pred[label] = []
-            index = self.vectorizer.vocabulary_[label]
+            index = self.vectorizer_y.vocabulary_[label]
             for ins in instances:
                 pred[label].append(ins[index])
         return pred

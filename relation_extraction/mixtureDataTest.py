@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from dataParse import construct_dataReader
-from classifier import LinearClassifier
+from classifier import LinearClassifier, OneVsRestClassifier
 from modelTest import draw_f1_curve, model_test
 from relationExtraction import generate_report
 from sklearn.model_selection import train_test_split
@@ -152,7 +152,7 @@ def test_models(classifiers, dataset, base_size):
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = [100000]
+    sizes = [10000]
     if opt.input:
         create_mixture_data(sizes)
     else:

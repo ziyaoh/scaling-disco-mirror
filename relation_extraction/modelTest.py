@@ -9,7 +9,7 @@ def draw_f1_curve(test_sets, base_size):
     # report = PdfPages('mixture_report.pdf')
 
     for rand_size in test_sets:
-        classifier, X_test, y_test = test_sets[label]
+        classifier, X_test, y_test = test_sets[rand_size]
         y_pred_binary = classifier.predict(X_test, binarized=True)
         y_test_binary = classifier.binarize_label(y_test)
 
@@ -37,7 +37,7 @@ def draw_f1_curve(test_sets, base_size):
 def report_helper(report, base_size, random_size, macros):
     report.write("base_%s_random_%s\n" % (base_size, random_size))
     for label in macros:
-        report.write("%s\t%s\n" % (label, macro[label]))
+        report.write("%s\t%s\n" % (label, macros[label]))
     report.write("\n")
 
 
