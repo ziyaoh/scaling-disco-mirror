@@ -9,8 +9,8 @@ from sklearn.model_selection import train_test_split
 
 
 base_file = 'train_DS'
-input_9000 = 'DS_random_9000.txt'
-input_18000 = 'DS_random_18000.txt'
+input_9000 = 'DS_random_9000'
+input_18000 = 'DS_random_18000'
 
 CV_proportion = 0.3
 
@@ -52,9 +52,9 @@ def get_command(base_size, additional_size=None, env='unix'):
 
 def get_output_file(base_size, additional_size=None):
     if not additional_size:
-        output_file = "base_%s.txt" % base_size
+        output_file = "base_%s" % base_size
     else:
-        output_file = "base_%s_random_%s.txt" % (base_size, additional_size)
+        output_file = "base_%s_random_%s" % (base_size, additional_size)
     return output_file
 
 
@@ -152,7 +152,7 @@ def test_models(classifiers, dataset, base_size):
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = ['all']
+    sizes = [10000]
     if opt.input:
         create_mixture_data(sizes)
     else:

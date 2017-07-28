@@ -122,23 +122,34 @@ def cooperate_data(files, formats, proportions=None):
     return final_data
 
 
-def write_final_data(final_data, output_file="final.txt"):
+def write_final_data(final_data, output_file='test_output', output_format='standard'):
     """
     e1  start_index1    end_index1  e2  start_index2    end_index2  relation    sentence    source
     """
-    with open(output_file, 'w') as file:
-        for i, instance in enumerate(final_data):
-            file.write('%s\t' % instance['source'])
-            file.write('%s\t%s\t%s\t' % (instance['e1'][0], instance['e1'][1], instance['e1'][2]))
-            file.write('%s\t%s\t%s\t' % (instance['e2'][0], instance['e2'][1], instance['e2'][2]))
-            file.write('%s\t' % instance['relation'])
-            file.write('%s\t' % instance['sentence'])
-            if 'features' in instance:
-                for i, feature in enumerate(instance['features']):
-                    file.write('%s' % feature)
-                    if i < len(instance['features']) - 1:
-                        file.write('\t')
-            file.write('\n')
+    if output_format == 'standard':
+        with open(output_file, 'w') as file:
+            for _, instance in enumerate(final_data):
+                file.write('%s\t' % instance['source'])
+                file.write('%s\t%s\t%s\t' % (instance['e1'][0], instance['e1'][1], instance['e1'][2]))
+                file.write('%s\t%s\t%s\t' % (instance['e2'][0], instance['e2'][1], instance['e2'][2]))
+                file.write('%s\t' % instance['relation'])
+                file.write('%s\t' % instance['sentence'])
+                if 'features' in instance:
+                    for i, feature in enumerate(instance['features']):
+                        file.write('%s' % feature)
+                        if i < len(instance['features']) - 1:
+                            file.write('\t')
+                file.write('\n')
+    elif output_format == 'datum':
+        with open(output_file, 'w') as file:
+            for _, instance in enumerate(final_data):
+                # only consider single relation instance for now
+                rel = '_NR' if len(instance['relation']) == 0 else instance['relation'][0]
+                file.write('{%s} PER GEO %s %s ' % (instance['e1'][0], instance['e2'][0], rel))
+                if 'features' in instance:
+                    for i, feature in enumerate(instance['features']):
+                        file.write('%s ' % feature)
+                file.write('\n')
 
 if __name__ == '__main__':
     opt = read_command()
