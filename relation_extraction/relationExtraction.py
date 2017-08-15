@@ -24,7 +24,7 @@ def read_command():
                              'will be used.')
     parser.add_argument('-c', '--classifier',
                         default='logit',
-                        choices=['logit', 'NN'],
+                        choices=['logit'],
                         help='The type of classifier we want to use. If not specified, logistic regression classifier '
                              'will be used.')
     parser.add_argument('-o', '--output',
@@ -46,7 +46,14 @@ def build_model(input_file, data_format, feature_type, classifier_type):
     """
     parser = construct_dataReader(input_file, data_format)
 
-    (X, y) = parser.read_format_data(feature_type)
+    (X, y_list) = parser.read_format_data(feature_type)
+
+    y = []
+    for labels in y_list:
+      if len(labels) == 0:
+          y.append('NA')
+      else:
+          y.append(labels[0])
 
     my_classifier = classifier.LinearClassifier(feature_type, classifier_type)
     my_classifier.fit(X, y)
@@ -60,7 +67,14 @@ def test_model(my_classifier, test_file, output_file, data_format, relations):
     """
     parser = construct_dataReader(test_file, data_format)
 
-    (X_test, y_test) = parser.read_format_data()
+    (X_test, y_test_list) = parser.read_format_data()
+
+    y_test = []
+    for labels in y_test_list:
+      if len(labels) == 0:
+          y_test.append('NA')
+      else:
+          y_test.append(labels[0])
 
     (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = modelTest.model_test(my_classifier, X_test, y_test, relations)
     return (confusion_table, accuracy, precision_recall, f1_micro, f1_macro)

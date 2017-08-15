@@ -13,9 +13,12 @@ def draw_f1_curve(test_sets, base_size):
         y_pred_binary = classifier.predict(X_test, binarized=True)
         y_test_binary = classifier.binarize_label(y_test)
 
+        #print y_pred_binary['per:origin'], len(y_pred_binary['per:origin'])
+        #print y_test_binary['per:origin'], len(y_test_binary['per:origin'])
+
         f1s[rand_size] = {}
         for label in y_pred_binary:
-            f1s[rand_size][label] = get_f1_score(y_pred_binary[label], y_test_binary[label], 'macro')
+            f1s[rand_size][label] = (get_f1_score(y_pred_binary[label], y_test_binary[label], 'macro'), get_confusion_table(y_pred_binary[label], y_test_binary[label], (0, 1)))
 
         # f1s[label] = {'micro': get_f1_score(y_pred, y_test, 'micro'), 'macro': get_f1_score(y_pred, y_test, 'macro')}
 
@@ -37,7 +40,11 @@ def draw_f1_curve(test_sets, base_size):
 def report_helper(report, base_size, random_size, macros):
     report.write("base_%s_random_%s\n" % (base_size, random_size))
     for label in macros:
-        report.write("%s\t%s\n" % (label, macros[label]))
+        report.write("%s\t%s\n" % (label, macros[label][0]))
+        confusion_table = macros[label][1]
+        report.write("\t%s\t%s\n" % (1, 0))
+        report.write("1\t%s\t%s\n" % (confusion_table[1][1], confusion_table[1][0]))
+        report.write("0\t%s\t%s\n" % (confusion_table[0][1], confusion_table[0][0]))
     report.write("\n")
 
 
@@ -71,8 +78,8 @@ def get_confusion_table(y_pred, y_test, relations):
     :return: {actual_class1: {pred_class1: number, pred_class2: number, ...}, actual_class2, ...}
     """
     # this is trivial as well but just for now...
-    if not 'travel' in relations:
-        relations.append('travel')
+    # if not 'travel' in relations:
+    #     relations.append('travel')
     confusion_table = {}
     for actual_relation in relations:
         confusion_table[actual_relation] = {}
@@ -81,10 +88,10 @@ def get_confusion_table(y_pred, y_test, relations):
 
     for i, relation in enumerate(y_test):
         relation_pred = y_pred[i]
-        # if not relation in confusion_table:
-        #     confusion_table[relation] = {}
-        # if not relation_pred in confusion_table[relation]:
-        #     confusion_table[relation][relation_pred] = 0
+        if not relation in confusion_table:
+            confusion_table[relation] = {}
+        if not relation_pred in confusion_table[relation]:
+            confusion_table[relation][relation_pred] = 0
         confusion_table[relation][relation_pred] += 1
     return confusion_table
 
@@ -121,8 +128,10 @@ def get_precision_recall(confusion_table):
             # num_target_true += get_num_pred(confusion_table, target_relation, relation)
             # num_target_pred += get_num_pred(confusion_table, relation, target_relation)
 
-            num_target_pred += confusion_table[relation][target_relation]
-            num_target_true += confusion_table[target_relation][relation]
+            if relation in confusion_table and target_relation in confusion_table[relation]:
+                num_target_pred += confusion_table[relation][target_relation]
+            if target_relation in confusion_table and relation in confusion_table[target_relation]:
+                num_target_true += confusion_table[target_relation][relation]
 
         if true_positive == 0:
             precision = 0

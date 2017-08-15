@@ -1,6 +1,7 @@
 import argparse
 import random
 import sys
+import os
 from dataParse import construct_dataReader
 
 def read_command():
@@ -36,6 +37,9 @@ def read_command():
     parser.add_argument('-o', '--output',
                         default=None,
                         help='Final output data file name.')
+    parser.add_argument('-n', '--neg-proportion',
+                        default=None,
+                        help='Proportion between number of negative samples and positive samples in final training data')
 
     opt = parser.parse_args()
 
@@ -63,8 +67,64 @@ def read_command():
                 if not prop == 'all':
                     print "unknown proportion argument %s" % prop
                     sys.exit()
+                else:
+                    parser = construct_dataReader(opt.inputs[i], opt.formats[i])
+                    opt.proportions[i] = len(parser.read_data()[0])
+
+    if opt.neg_proportion:
+        try:
+            opt.neg_proportion = int(opt.neg_proportion)
+        except ValueError:
+            print "unknown neg_proportion argument %s" % opt.neg_proportion
+            sys.exit()
 
     return opt
+
+
+def merge_DS_CS(DS, DSFormat, DSProportion, CS, CSFormat, CSProportion, negProportion):
+    posDS = 'posDS'
+    negDS = 'negDS'
+    posCS = 'posCS'
+    negCS = 'negCS'
+
+    numDSPos, numDSNeg = split_pos_neg(DS, DSFormat, posDS, negDS)
+    numCSPos, numCSNeg = split_pos_neg(CS, CSFormat, posCS, negCS)
+
+    staticTrainingFile = 'staticTrainingFile'
+    scalingTrainingFile = 'scalingTrainFile'
+
+    numDSPosUse = int(round(DSProportion / (1 + negProportion)))
+    numCSPosUse = int(round(CSProportion / (1 + negProportion)))
+    numDSPosUse = numDSPos if numDSPos <= numDSPosUse else numDSPosUse
+    numCSPosUse = numCSPos if numCSPos <= numCSPosUse else numCSPosUse
+
+    staticTrainingData = cooperate_data([posCS, negCS], ['standard', 'standard'], [numCSPosUse, negProportion * numCSPosUse])
+    scalingTrainingData = cooperate_data([posDS, negDS], ['standard', 'standard'], [numDSPosUse, negProportion * numDSPosUse])
+
+    trainingData = staticTrainingData + scalingTrainingData
+    random.shuffle(trainingData)
+
+    os.remove(posDS)
+    os.remove(negDS)
+    os.remove(posCS)
+    os.remove(negCS)
+    
+    return trainingData
+
+
+def split_pos_neg(dataFile, dataFormat, posFile, negFile):
+    numPos = 0
+    numNeg = 0
+    with open(posFile, 'w') as posWriter, open(negFile, 'w') as negWriter:
+        data = construct_dataReader(dataFile, dataFormat).read_data()[0]
+        for instance in data:
+            if len(instance['relation']) == 0:
+                write_instance(instance, negWriter)
+                numNeg += 1
+            else:
+                write_instance(instance, posWriter)
+                numPos += 1
+    return numPos, numNeg
 
 
 def cooperate_data(files, formats, proportions=None):
@@ -119,6 +179,7 @@ def cooperate_data(files, formats, proportions=None):
         for reader in parsers:
             final_data.extend(reader.read_data()[0])
 
+    random.shuffle(final_data)
     return final_data
 
 
@@ -127,19 +188,10 @@ def write_final_data(final_data, output_file='test_output', output_format='stand
     e1  start_index1    end_index1  e2  start_index2    end_index2  relation    sentence    source
     """
     if output_format == 'standard':
-        with open(output_file, 'w') as file:
+        with open(output_file, 'w') as writer:
             for _, instance in enumerate(final_data):
-                file.write('%s\t' % instance['source'])
-                file.write('%s\t%s\t%s\t' % (instance['e1'][0], instance['e1'][1], instance['e1'][2]))
-                file.write('%s\t%s\t%s\t' % (instance['e2'][0], instance['e2'][1], instance['e2'][2]))
-                file.write('%s\t' % instance['relation'])
-                file.write('%s\t' % instance['sentence'])
-                if 'features' in instance:
-                    for i, feature in enumerate(instance['features']):
-                        file.write('%s' % feature)
-                        if i < len(instance['features']) - 1:
-                            file.write('\t')
-                file.write('\n')
+                write_instance(instance, writer)
+
     elif output_format == 'datum':
         with open(output_file, 'w') as file:
             for _, instance in enumerate(final_data):
@@ -151,11 +203,35 @@ def write_final_data(final_data, output_file='test_output', output_format='stand
                         file.write('%s ' % feature)
                 file.write('\n')
 
+
+def write_instance(instance, writer):
+    writer.write('%s\t' % instance['source'])
+    writer.write('%s\t%s\t%s\t' % (instance['e1'][0], instance['e1'][1], instance['e1'][2]))
+    writer.write('%s\t%s\t%s\t' % (instance['e2'][0], instance['e2'][1], instance['e2'][2]))
+    writer.write('%s\t' % instance['relation'])
+    writer.write('%s\t' % instance['sentence'])
+    if 'features' in instance:
+        for i, feature in enumerate(instance['features']):
+            writer.write('%s' % feature)
+            if i < len(instance['features']) - 1:
+                writer.write('\t')
+    writer.write('\n')
+
+
 if __name__ == '__main__':
     opt = read_command()
 
-    final_data = cooperate_data(opt.inputs, opt.formats, opt.proportions)
-    if opt.output:
-        write_final_data(final_data, opt.output)
+    if opt.neg_proportion:
+        if len(opt.inputs) != 2:
+            print 'With neg_proportion specified, input has to be two files, in the order of [DSFile, CSFile]'
+            sys.exit()
+        final_data = merge_DS_CS(opt.inputs[0], opt.formats[0], opt.proportions[0], opt.inputs[1], opt.formats[1], opt.proportions[1], opt.neg_proportion)
     else:
-        write_final_data(final_data)
+        final_data = cooperate_data(opt.inputs, opt.formats, opt.proportions)
+    if opt.output:
+        output = opt.output
+    else:
+        output = '%s_%s_%s_%s' % (opt.inputs[0], opt.proportions[0], opt.inputs[1], opt.proportions[1])
+        if opt.neg_proportion:
+            output += 'neg_%s' % opt.neg_proportion
+    write_final_data(final_data, output)

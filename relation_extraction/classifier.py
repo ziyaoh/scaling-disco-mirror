@@ -36,25 +36,29 @@ class LinearClassifier(Classifier):
         print feature, classifier
 
         if feature == 'unigram':
-            self.vectorizer = CountVectorizer()
+            self.vectorizer_x = CountVectorizer(binary=True)
         elif feature == 'semantic':
-            self.vectorizer = CountVectorizer(analyzer=lambda x: x)
+            self.vectorizer_x = CountVectorizer(analyzer=lambda x: x, binary=True)
+        self.vectorizer_y = CountVectorizer()
 
         if classifier == 'logit':
             self.classifier = LogisticRegression()
 
-        self.pipe = Pipeline(steps=[('feature', self.vectorizer), ('classifier', self.classifier)])
+        # self.pipe = Pipeline(steps=[('feature', self.vectorizer), ('classifier', self.classifier)])
 
     def fit(self, X, y):
         # self.pipe.fit(X, y)
-        self.vectorizer.fit(X)
-        features = self.vectorizer.transform(X)
-        print 'length vocabulary:', len(self.vectorizer.vocabulary_)
+        self.vectorizer_x.fit(X)
+        features = self.vectorizer_x.transform(X)
+        y_binary = self.vectorizer_y.fit_transform(y)
+        print 'length vocabulary:', len(self.vectorizer_x.vocabulary_)
         self.classifier.fit(features, y)
 
     def predict(self, X):
-        features = self.vectorizer.transform(X)
-        return self.classifier.predict(features)
+        features = self.vectorizer_x.transform(X)
+        pred = self.classifier.predict(features)
+        print pred
+        return pred
 
 
 class OneVsRestClassifier(Classifier):
@@ -69,11 +73,15 @@ class OneVsRestClassifier(Classifier):
             self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
 
         if classifier == 'logit':
-            self.classifier = OVRClassifier(LogisticRegression())
+            self.classifier = OVRClassifier(LogisticRegression(class_weight='balanced'))
 
     def fit(self, X, y):
         X_vec = self.vectorizer_x.fit_transform(X)
         y_vec = self.vectorizer_y.fit_transform(y)
+
+        y_for_test = self.classify_by_label(y_vec.toarray())
+        for label in y_for_test:
+            print label, len(y_for_test[label]), sum(y_for_test[label]), len(y_for_test[label]) - sum(y_for_test[label])
 
         self.classifier.fit(X_vec, y_vec)
 
