@@ -363,6 +363,56 @@ class AngliReader(DataReader):
 
         return instance
 
+
+class DefaultFeaturizedReader(DataReader):
+
+    def read_data(self):
+        data = []
+        abnormalData = []
+        relations = []
+
+        with open(self.input_file, 'r') as file:
+            content = file.readlines()
+
+        for row in content:
+            try:
+                instance = {}
+
+                instance_info = row.split('\t')
+
+                instance['e1'] = (instance_info[0], instance_info[1], instance_info[2])
+                instance['e2'] = (instance_info[3], instance_info[4], instance_info[5])
+
+                instance['relation'] = ast.literal_eval(instance_info[7])
+                for rel in instance['relation']:
+                    if rel not in relations:
+                        relations.append(rel)
+
+                # instace['relation'] = instance_info[7]
+                # if instance_info[7] not in relations:
+                #     relations.append(instance_info[7])
+
+                instance['sentence'] = instance_info[11]
+
+                instance['features'] = []
+                for i in range(12, len(instance_info)):
+                    if i % 2 == 0:
+                        instance['features'].append(instance_info[i].rstrip())
+
+                data.append(instance)
+
+            except StopIteration:
+                break
+
+            except ValueError:
+                abnormalData.append(row)
+
+        return data, abnormalData, relations
+
+    def handle_abnormal_data(self, abnormal_data):
+        pass
+
+
 def construct_dataReader(file, format):
     if format == 'SemEval':
         return SemEvalReader(file)
@@ -372,6 +422,8 @@ def construct_dataReader(file, format):
         return StandardReader(file)
     elif format == 'Angli':
         return AngliReader(file)
+    elif format == 'DefaultFeaturized':
+        return DefaultFeaturizedReader(file)
     else:
         print "Unknown file format", format
         sys.exit()

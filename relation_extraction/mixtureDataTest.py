@@ -1,10 +1,8 @@
 import os
 import sys
 import argparse
+from relationExtraction import build_model, test_model
 from dataParse import construct_dataReader
-from classifier import LinearClassifier, OneVsRestClassifier
-from modelTest import draw_f1_curve, model_test
-from relationExtraction import generate_report
 from sklearn.model_selection import train_test_split
 
 
@@ -95,25 +93,12 @@ def get_data(base_size, test_file, feature, cross_validation=False):
     return dataset
 
 
-def train_models(dataset, feature, base_size):
-    classifier = build_model(get_output_file(base_size), dataset[0][0], dataset[0][2], feature)
-    classifier_9000 = build_model(get_output_file(base_size, 9000), dataset[9000][0], dataset[9000][2], feature)
-    classifier_18000 = build_model(get_output_file(base_size, 18000), dataset[18000][0], dataset[18000][2], feature)
+def train_models(dataset, feature, classifier_type):
+    classifier = build_model(dataset[0][0], dataset[0][2], feature, classifier_type)
+    classifier_9000 = build_model(dataset[9000][0], dataset[9000][2], feature, classifier_type)
+    classifier_18000 = build_model(dataset[18000][0], dataset[18000][2], feature, classifier_type)
 
     return (classifier, classifier_9000, classifier_18000)
-
-
-def build_model(input_file, X, y, feature):
-    """
-    Read training data from input file, fit a classifier model according to the training data.
-    Read testing data from test file, and test the classifier model.
-    """
-    print "training on %s" % input_file
-
-    # my_classifier = LinearClassifier(feature=feature)
-    my_classifier = OneVsRestClassifier(feature=feature)
-    my_classifier.fit(X, y)
-    return my_classifier
 
 
 def test_models(classifiers, dataset, base_size):
@@ -126,38 +111,20 @@ def test_models(classifiers, dataset, base_size):
 
     print "testing classifiers"
 
-    test_set = {
-        0: (classifiers[0], dataset[0][1], dataset[0][3]),
-        9000: (classifiers[1], dataset[9000][1], dataset[9000][3]),
-        18000: (classifiers[2], dataset[18000][1], dataset[18000][3])
-    }
-
-    draw_f1_curve(test_set, base_size)
-
-    if False:
-        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[0], test_set[0][1],
-                                                                                             test_set[0][2], dataset[0][4])
-        generate_report('semantic', 'logit', '0_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[0][4])
-
-        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[1], test_set[9000][1],
-                                                                                             test_set[9000][2], dataset[9000][4])
-        generate_report('semantic', 'logit', '9000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[9000][4])
-
-
-        (confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = model_test(classifiers[2], test_set[18000][1],
-                                                                                             test_set[18000][2], dataset[18000][4])
-        generate_report('semantic', 'logit', '18000_report.txt', confusion_table, accuracy, precision_recall, f1_micro, f1_macro, dataset[18000][4])
+    test_model(classifiers[0], dataset[0][1], dataset[0][3], '%s.score' % get_output_file(base_size))
+    test_model(classifiers[1], dataset[9000][1], dataset[9000][3], '%s.score' % get_output_file(base_size, 9000))
+    test_model(classifiers[2], dataset[18000][1], dataset[18000][3], '%s.score' % get_output_file(base_size, 18000))
 
 
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = [10000]
+    sizes = [100]
     if opt.input:
         create_mixture_data(sizes)
     else:
         feature = 'semantic'
         for base_size in sizes:
             dataset = get_data(base_size, 'test', feature, cross_validation=False)
-            classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, base_size=base_size)
+            classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, 'OneVsRest')
             test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)
