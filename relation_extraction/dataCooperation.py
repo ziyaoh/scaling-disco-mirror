@@ -212,7 +212,7 @@ def write_instance(instance, writer):
     writer.write('%s\t' % instance['sentence'])
     if 'features' in instance:
         for i, feature in enumerate(instance['features']):
-            writer.write('%s' % feature)
+            writer.write('%s\t0' % feature)
             if i < len(instance['features']) - 1:
                 writer.write('\t')
     writer.write('\n')

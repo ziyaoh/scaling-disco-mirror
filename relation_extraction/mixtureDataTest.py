@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from relationExtraction import build_model, test_model
+from relationExtraction import parse_data, build_model, test_model
 from dataParse import construct_dataReader
 from sklearn.model_selection import train_test_split
 
@@ -56,19 +56,16 @@ def get_output_file(base_size, additional_size=None):
     return output_file
 
 
-def get_data(base_size, test_file, feature, cross_validation=False):
+def get_data(base_size, test_file, feature, classifier_type, cross_validation=False):
     if feature != 'unigram' and feature != 'semantic':
         print 'unknown feature type'
         sys.exit()
 
     print 'reading data'
-    parser_base = construct_dataReader(get_output_file(base_size), 'standard')
-    parser_9000 = construct_dataReader(get_output_file(base_size, 9000), 'standard')
-    parser_18000 = construct_dataReader(get_output_file(base_size, 18000), 'standard')
 
-    X_base, y_base = parser_base.read_format_data(feature)
-    X_9000, y_9000 = parser_9000.read_format_data(feature)
-    X_18000, y_18000 = parser_18000.read_format_data(feature)
+    X_base, y_base, relations_base, sig_base = parse_data(get_output_file(base_size), 'standard', feature, classifier_type)
+    X_9000, y_9000, relations_9000, sig_9000 = parse_data(get_output_file(base_size, 9000), 'standard', feature, classifier_type)
+    X_18000, y_18000, relations_18000, sig_18000 = parse_data(get_output_file(base_size, 18000), 'standard', feature, classifier_type)
 
     if cross_validation:
         X_base_train, X_base_test, y_base_train, y_base_test = train_test_split(X_base, y_base, test_size=CV_proportion)
@@ -76,27 +73,26 @@ def get_data(base_size, test_file, feature, cross_validation=False):
         X_18000_train, X_18000_test, y_18000_train, y_18000_test = train_test_split(X_18000, y_18000, test_size=CV_proportion)
 
         dataset = {
-            0: (X_base_train, X_base_test, y_base_train, y_base_test, parser_base.relations),
-            9000: (X_9000_train, X_9000_test, y_9000_train, y_9000_test, parser_9000.relations),
-            18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, parser_18000.relations)
+            0: (X_base_train, X_base_test, y_base_train, y_base_test, relations_base),
+            9000: (X_9000_train, X_9000_test, y_9000_train, y_9000_test, relations_9000),
+            18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, relations_18000)
         }
     else:
-        parser_test = construct_dataReader(test_file, 'Angli')
-        X_test, y_test = parser_test.read_format_data(feature)
+        X_test, y_test, relations_test, sig_test = parse_data(test_file, 'Angli', feature, classifier_type)
 
         dataset = {
-            0: (X_base, X_test, y_base, y_test, parser_base.relations),
-            9000: (X_9000, X_test, y_9000, y_test, parser_9000.relations),
-            18000: (X_18000, X_test, y_18000, y_test, parser_18000.relations)
+            0: (X_base, X_test, y_base, y_test, relations_base),
+            9000: (X_9000, X_test, y_9000, y_test, relations_9000),
+            18000: (X_18000, X_test, y_18000, y_test, relations_18000)
         }
 
     return dataset
 
 
 def train_models(dataset, feature, classifier_type):
-    classifier = build_model(dataset[0][0], dataset[0][2], feature, classifier_type)
-    classifier_9000 = build_model(dataset[9000][0], dataset[9000][2], feature, classifier_type)
-    classifier_18000 = build_model(dataset[18000][0], dataset[18000][2], feature, classifier_type)
+    classifier = build_model(dataset[0][0], dataset[0][2], feature, classifier_type, get_output_file(base_size))
+    classifier_9000 = build_model(dataset[9000][0], dataset[9000][2], feature, classifier_type, get_output_file(base_size, 9000))
+    classifier_18000 = build_model(dataset[18000][0], dataset[18000][2], feature, classifier_type, get_output_file(base_size, 18000))
 
     return (classifier, classifier_9000, classifier_18000)
 
@@ -125,6 +121,6 @@ if __name__ == '__main__':
     else:
         feature = 'semantic'
         for base_size in sizes:
-            dataset = get_data(base_size, 'test', feature, cross_validation=False)
+            dataset = get_data(base_size, 'test', feature, 'OneVsRest', cross_validation=False)
             classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, 'OneVsRest')
             test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)

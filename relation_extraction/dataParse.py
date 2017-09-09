@@ -256,8 +256,9 @@ class StandardReader(DataReader):
                 instance['sentence'] = instance_info[8]
 
                 instance['features'] = []
-                for i in range(8, len(instance_info)):
-                    instance['features'].append(instance_info[i].rstrip())
+                for i in range(9, len(instance_info)):
+                    if i % 2 == 1:
+                        instance['features'].append(instance_info[i].rstrip())
 
                 data.append(instance)
 
@@ -359,7 +360,8 @@ class AngliReader(DataReader):
 
         instance['features'] = []
         for i in range(12, len(vals)):
-            instance['features'].append(vals[i].rstrip())
+            if i % 2 == 0:
+                instance['features'].append(vals[i].rstrip())
 
         return instance
 

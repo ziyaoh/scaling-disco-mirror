@@ -38,10 +38,15 @@ class Classifier:
     def get_relations(self):
         return self.relations
 
+    def get_signiture(self):
+        return self.signiture
+
 
 class LinearClassifier(Classifier):
-    def __init__(self, feature='unigram', classifier='logit'):
+    def __init__(self, feature='unigram', classifier='logit', signiture=None):
         print feature, classifier
+        
+        self.signiture = signiture
 
         self.relations = []
 
@@ -125,14 +130,16 @@ class LinearClassifier(Classifier):
 
 
 class OneVsRestClassifier(Classifier):
-    def __init__(self, feature='unigram', classifier='logit'):
+    def __init__(self, feature='unigram', classifier='logit', signiture=None):
         print feature, classifier
+
+        self.signiture = signiture
 
         self.relations = []
 
         if feature == 'unigram':
             self.vectorizer_x = CountVectorizer()
-            self.vectorizer_y = CountVectorizer()
+            self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
         elif feature == 'semantic':
             self.vectorizer_x = CountVectorizer(analyzer=lambda x: x)
             self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
@@ -143,8 +150,11 @@ class OneVsRestClassifier(Classifier):
     def fit(self, X, y):
         relations_set = set()
         for ins_labels in y:
-            relations_set = relations_set.union(set(ins_labels))
+            for ins_label in ins_labels:
+                relations_set.add(ins_label)
         self.relations = list(relations_set)
+        print "relations: ", relations_set
+
 
         X_vec = self.vectorizer_x.fit_transform(X)
         y_vec = self.vectorizer_y.fit_transform(y)
@@ -203,11 +213,11 @@ class OneVsRestClassifier(Classifier):
             writer.write("overall F1: %s\n" % overall_f1)
             writer.write("\n")
 
-def construct_classifier(feature, classifier_type):
+def construct_classifier(feature, classifier_type, signiture):
     if classifier_type == 'linear':
-        return LinearClassifier(feature)
+        return LinearClassifier(feature, signiture=signiture)
     elif classifier_type == 'OneVsRest':
-        return OneVsRestClassifier(feature)
+        return OneVsRestClassifier(feature, signiture=signiture)
     else:
         print 'unknown classifier type: %s' % classifier_type
         sys.exit()
