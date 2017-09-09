@@ -1,0 +1,2 @@
+fakeSessionId	Obama	0	1	America	6	7	FakeSentenceId	employment	Obama is the president of America.
+fakeSessionId	bird	1	2	sky	5	6	FakeSentenceId	belong	The bird belongs to the sky.
