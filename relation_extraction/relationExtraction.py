@@ -3,6 +3,7 @@ import sys
 import pickle
 import classifier
 import modelTest
+import os
 from contextlib import contextmanager
 from dataParse import construct_dataReader
 from classifier import construct_classifier
@@ -44,7 +45,7 @@ def read_command():
 def parse_data(input_file, data_format, feature_type, classifier_type):
     parser = construct_dataReader(input_file, data_format)
 
-    print 'parsing'
+    print 'parsing %s...' % input_file
     (X, y_list) = parser.read_format_data(feature_type)
 
     y = []
@@ -67,8 +68,13 @@ def build_model(X, y, feature_type, classifier_type, signiture):
     Read testing data from test file, and test the classifier model.
     """
 
+    if os.path.isfile(get_model_file(signiture)):
+        return load_model(get_model_file(signiture))
+
+    print 'building model %s...' % (get_model_file(signiture))
     my_classifier = construct_classifier(feature_type, classifier_type, signiture)
     my_classifier.fit(X, y)
+    save_model(my_classifier)
     return my_classifier
 
 
@@ -80,18 +86,25 @@ def test_model(my_classifier, X_test, y_test, report=None):
 
     #(confusion_table, accuracy, precision_recall, f1_micro, f1_macro) = modelTest.model_test(my_classifier, X_test, y_test, relations)
     #return (confusion_table, accuracy, precision_recall, f1_micro, f1_macro)
+    print 'evaluating...'
     if report is None:
         report = '%s.score' % my_classifier.get_signiture()
     my_classifier.evaluate(X_test, y_test, report)
 
 
 def save_model(classifier):
-    model_file = '%s.model' % classifier.get_signiture()
+    model_file = get_model_file(classifier.get_signiture())
+    print 'saving model %s...' % model_file
     pickle.dump(classifier, open(model_file, 'wb'), pickle.HIGHEST_PROTOCOL)
 
 
 def load_model(model_file):
+    print 'loading model %s...' % model_file
     return pickle.load(open(model_file, 'rb'))
+
+
+def get_model_file(signiture):
+    return 'model/%s.model' % signiture
 
 
 if __name__ == '__main__':

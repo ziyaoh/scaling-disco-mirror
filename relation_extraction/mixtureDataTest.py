@@ -50,9 +50,9 @@ def get_command(base_size, additional_size=None, env='unix'):
 
 def get_output_file(base_size, additional_size=None):
     if not additional_size:
-        output_file = "base_%s" % base_size
+        output_file = "DS_%s_neg_1" % base_size
     else:
-        output_file = "base_%s_random_%s" % (base_size, additional_size)
+        output_file = "DS_%s_CS_%s_neg_1" % (base_size, additional_size)
     return output_file
 
 
@@ -115,7 +115,8 @@ def test_models(classifiers, dataset, base_size):
 if __name__ == '__main__':
     opt = read_command()
 
-    sizes = [100]
+    sizes = ['all']
+
     if opt.input:
         create_mixture_data(sizes)
     else:
