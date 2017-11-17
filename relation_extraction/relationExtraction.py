@@ -1,6 +1,7 @@
 import argparse
 import sys
-import pickle
+import dill as pickle
+#import pickle
 import classifier
 import modelTest
 import os

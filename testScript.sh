@@ -15,4 +15,4 @@ cd ../../
 
 cd relation_extraction
 python relationExtraction.py ../$TrainingFile ../$OriginalEvalFile
-cat "${TrainingFile}.score"
+#cat "${TrainingFile}.score"

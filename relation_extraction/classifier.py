@@ -141,7 +141,7 @@ class OneVsRestClassifier(Classifier):
             self.vectorizer_x = CountVectorizer()
             self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
         elif feature == 'semantic':
-            self.vectorizer_x = CountVectorizer(analyzer=lambda x: x)
+            self.vectorizer_x = CountVectorizer(analyzer=lambda x: x, binary=True)
             self.vectorizer_y = CountVectorizer(analyzer=lambda x: x)
 
         if classifier == 'logit':
@@ -163,6 +163,8 @@ class OneVsRestClassifier(Classifier):
         for label in y_for_test:
             print label, len(y_for_test[label]), sum(y_for_test[label]), len(y_for_test[label]) - sum(y_for_test[label])
 
+        #print X_vec.toarray()
+        #print y_vec.toarray()
         self.classifier.fit(X_vec, y_vec)
 
     def predict(self, X, binarized=False):

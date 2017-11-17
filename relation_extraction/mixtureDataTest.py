@@ -78,7 +78,7 @@ def get_data(base_size, test_file, feature, classifier_type, cross_validation=Fa
             18000: (X_18000_train, X_18000_test, y_18000_train, y_18000_test, relations_18000)
         }
     else:
-        X_test, y_test, relations_test, sig_test = parse_data(test_file, 'Angli', feature, classifier_type)
+        X_test, y_test, relations_test, sig_test = parse_data(test_file, 'standard', feature, classifier_type)
 
         dataset = {
             0: (X_base, X_test, y_base, y_test, relations_base),
@@ -122,6 +122,6 @@ if __name__ == '__main__':
     else:
         feature = 'semantic'
         for base_size in sizes:
-            dataset = get_data(base_size, 'test', feature, 'OneVsRest', cross_validation=False)
+            dataset = get_data(base_size, 'new_test', feature, 'OneVsRest', cross_validation=False)
             classifier, classifier_9000, classifier_18000 = train_models(dataset, feature, 'OneVsRest')
             test_models([classifier, classifier_9000, classifier_18000], dataset, base_size=base_size)
